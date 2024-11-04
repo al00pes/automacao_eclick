@@ -3,20 +3,24 @@ import time
 import pandas as pd
 import credenciais
 from bs4 import BeautifulSoup # biblioteca para fazer o webscrapping
-import request
-
+import requests
+import shutil
+import os
+from datetime import datetime
 
 
 class sistema():
     # Inicio da função
     def __init__(self):
         options = webdriver.ChromeOptions()
+        options.add_argument("--headless")
         options.add_argument("--start-maximized") # Maximizar a janela ao abrir 
         self.driver = webdriver.Chrome(options=options)
 
     # abre o site do sistema interno
     def abrir_site(self):
        self.driver.get('https://rpeotta.e-clic.net/Account/Login?ReturnUrl=%2f')
+       print("abrir_site")
        time.sleep(4)
     
     #importando as crendencias e faz login no sistema
@@ -39,10 +43,12 @@ class sistema():
         #Clica no para acessar o sistema
         botao_clique = self.driver.find_element("xpath",'/html/body/div[1]/div[1]/div[3]/div[1]/form/div/div[1]/button')
         botao_clique.click()
+        print("Logando no sistema")
         time.sleep(5)
         #self.driver.quit()
 
     def extrair_relatorio(self):
+        print("Extraindo o relatorio")
         self.driver.get('https://rpeotta.e-clic.net/documento/Report/relatorio_documento.aspx')
         time.sleep(4)
 
@@ -69,18 +75,46 @@ class sistema():
         botao_excel = self.driver.find_element('xpath','//*[@id="ReportViewer1_ctl09_ctl04_ctl00_Menu"]')
         time.sleep(2)
         botao_excel.click()
-        time.sleep(6)
-
+        print("Relatório baixado")
+        time.sleep(10)
+    #Extrair a tabela via html
     def web_scrapping(self):
         pageSource = self.driver.page_source
         bs = BeautifulSoup(pageSource, 'html.parser')
         print(bs.find(id='content').get_text())
         time.sleep(10)
+    
+    def manipulacao_arquivo(self):
+        #Obtem a data e hora atual
+        now = datetime.now()
+        #Formata a data e a hora para incluir no nome do arquivo (ex: "2024-11-04_15-30-45")
+        timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
+                
+        #Caminho do arquivo no downloads
+        arquivo_origem = 'C:\\Users\\arthur.lopes\Downloads\\relatorio documento.xlsx'
 
+        #Realizando a copia do arquivo para a pasta destino (solicitado pela Aline)
+        #OBS: O arquivo precisa sempre se substituidp pelo atual 
+        shutil.copy(arquivo_origem,'T:\\13.Planejamento\\01. LD e CR\\0000 - BASE DE DADOS\\relatorio_eclick.xlsx')
+        print("Arquivo salvo na base de dados")
 
+        #Salvando uma copia no pasta (OBSOLETO)
+        destino_obsoleto = 'T:\\13.Planejamento\\01. LD e CR\\0000 - BASE DE DADOS\\Obsoleto\\'
+        nome_arquivo_timestamp = f"relatorio_eclick_{timestamp}.xlsx"
+        destino_arquivo_obsoleto = destino_obsoleto + nome_arquivo_timestamp 
 
+        #shutil.copy(arquivo_origem,'T:\\13.Planejamento\\01. LD e CR\\0000 - BASE DE DADOS\\Obsoleto\\relatorio_eclick.xlsx')
+        shutil.copy(arquivo_origem,destino_arquivo_obsoleto)
+        print("Arquivo salvo na pasta obsoleto")
 
+        time.sleep(5)
+        #Apagando o arquivo baixado para não haver duplicação do nome
+        os.remove(arquivo_origem)
+        print("Arquivo deletado da pasta download")
+        time.sleep(5)
+        
     def fim_automação(self):
+        print("Fim da automação")
         self.driver.quit()
 
 
@@ -95,4 +129,5 @@ sistema.abrir_site()
 sistema.crendenciais()
 sistema.extrair_relatorio()
 #sistema.web_scrapping()
+sistema.manipulacao_arquivo()
 sistema.fim_automação()
